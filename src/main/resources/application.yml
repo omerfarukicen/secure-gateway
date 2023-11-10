@@ -1,0 +1,61 @@
+server:
+  port : 8580
+logging:
+  level:
+    root: DEBUG
+    reactor:
+      netty: DEBUG
+    org:
+      springframework:
+        cloud:
+          gateway: TRACE
+spring:
+  application.name: secure-gateway-client
+  cache:
+    type: redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: redispassword
+      timeout: 600ms
+      ssl:
+        enabled: false
+      sentinel:
+        master: mymaster
+        nodes:
+          - 127.0.0.1:26379
+          - 127.0.0.1:26380
+          - 127.0.0.1:26381
+        lettuce:
+          shutdown-timeout: 200ms
+
+  cloud:
+    gateway:
+      routes:
+        - id: resources
+          uri: http://localhost:8582/messages
+          predicates:
+            Path=/messages/**
+          filters:
+            TokenRelay=
+  security:
+    oauth2:
+      client:
+        registration:
+          gateway:
+            provider: keycloak-provider
+            client-id: application
+            client-secret: zq2plWhWdrnXwBwEH2jP6QJWBlI3Yy8m
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid, application_users
+        provider:
+          keycloak-provider:
+            issuer-uri: "http://auth-server:8080/realms/application"
+            authorization-uri: "http://auth-server:8080/realms/application/protocol/openid-connect/auth"
+            token-uri: "http://auth-server:8080/realms/application/protocol/openid-connect/token"
+            user-info-uri: "http://auth-server:8080/realms/application/protocol/openid-connect/userinfo"
+            user-name-attribute: preferred_username
+redirect:
+  url: http://localhost:3000/
